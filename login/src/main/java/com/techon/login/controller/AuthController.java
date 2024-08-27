@@ -22,8 +22,14 @@ public class AuthController {
 
   @PostMapping("/login")
   public ResponseEntity<TokenResponse> login(@RequestBody LoginRequest loginRequest) {
-    TokenResponse tokenResponse = authService.login(loginRequest.getNameid(), loginRequest.getPassword());
-    return ResponseEntity.ok(tokenResponse);
+    try {
+      TokenResponse tokenResponse = authService.login(loginRequest.getNameid(), loginRequest.getPassword());
+      return ResponseEntity.ok(tokenResponse);
+    }catch (Exception e) {
+      e.printStackTrace();
+      return null;
+    }
+
   }
 
   @PostMapping("/register")

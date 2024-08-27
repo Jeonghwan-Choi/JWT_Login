@@ -3,10 +3,13 @@ package com.techon.login.service;
 import com.techon.login.common.JwtProperties;
 import com.techon.login.common.JwtUtil;
 import com.techon.login.dto.TokenResponse;
+import com.techon.login.entity.Authority;
 import com.techon.login.entity.Member;
 import com.techon.login.entity.Token;
+import com.techon.login.repository.AuthorityRepository;
 import com.techon.login.repository.TokenRepository;
 import com.techon.login.repository.MemberRepository;  // Ensure this is your correct repository package
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +35,8 @@ public class AuthService {
 
   private final TokenRepository tokenRepository;
 
+  private final AuthorityRepository authorityRepository;
+
   @Transactional
   public TokenResponse login(String nameid, String password) {
 
@@ -50,9 +55,11 @@ public class AuthService {
     // If a token exists, delete it
     existingToken.ifPresent(tokenRepository::delete);
 
+    List<Authority> roleList = authorityRepository.findByMember(member.get());
+
     // Generate AccessToken (AC) and RefreshToken (RF)
-    String accessToken = jwtUtil.generateToken(userSeq, "AC", JwtProperties.ACCESS_TOKEN_EXPIRATION);
-    String refreshToken = jwtUtil.generateToken(userSeq, "RF", JwtProperties.REFRESH_TOKEN_EXPIRATION);
+    String accessToken = jwtUtil.generateToken(userSeq, "AC", JwtProperties.ACCESS_TOKEN_EXPIRATION, roleList);
+    String refreshToken = jwtUtil.generateToken(userSeq, "RF", JwtProperties.REFRESH_TOKEN_EXPIRATION, roleList);
 
     // Save the new tokens to the token table
     Token token = Token.builder()
