@@ -9,6 +9,7 @@ import com.techon.login.entity.Token;
 import com.techon.login.repository.AuthorityRepository;
 import com.techon.login.repository.TokenRepository;
 import com.techon.login.repository.MemberRepository;  // Ensure this is your correct repository package
+import io.jsonwebtoken.Claims;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -43,7 +44,7 @@ public class AuthService {
     // Load the Member entity based on the username (this replaces CustomUserDetailsService)
     Optional<Member> member = memberRepository.findByNameidAndDeletedAtIsNull(nameid);
 
-    if(member.isEmpty()) {
+    if (member.isEmpty()) {
       throw new RuntimeException("User Not Found");
     }
 
@@ -58,8 +59,10 @@ public class AuthService {
     List<Authority> roleList = authorityRepository.findByMember(member.get());
 
     // Generate AccessToken (AC) and RefreshToken (RF)
-    String accessToken = jwtUtil.generateToken(userSeq, "AC", JwtProperties.ACCESS_TOKEN_EXPIRATION, roleList);
-    String refreshToken = jwtUtil.generateToken(userSeq, "RF", JwtProperties.REFRESH_TOKEN_EXPIRATION, roleList);
+    String accessToken = jwtUtil.generateToken(userSeq, "AC", JwtProperties.ACCESS_TOKEN_EXPIRATION,
+        roleList);
+    String refreshToken = jwtUtil.generateToken(userSeq, "RF",
+        JwtProperties.REFRESH_TOKEN_EXPIRATION, roleList);
 
     // Save the new tokens to the token table
     Token token = Token.builder()
@@ -67,12 +70,19 @@ public class AuthService {
         .accessToken(accessToken)
         .refreshToken(refreshToken)
         .accessExpiry(new Date(System.currentTimeMillis() + JwtProperties.ACCESS_TOKEN_EXPIRATION))
-        .refreshExpiry(new Date(System.currentTimeMillis() + JwtProperties.REFRESH_TOKEN_EXPIRATION))
+        .refreshExpiry(
+            new Date(System.currentTimeMillis() + JwtProperties.REFRESH_TOKEN_EXPIRATION))
         .build();
 
     tokenRepository.save(token);
 
     // Return the tokens to the client
     return new TokenResponse(member.get(), accessToken, refreshToken);
+  }
+
+  public Member getTokenInfo(String token) {
+    Claims tokenInfo = jwtUtil.extractAllClaims(token);
+    Long userSeq =  Long.valueOf(tokenInfo.get("userSeq").toString());
+    return memberRepository.findByIdAndDeletedAtIsNull(userSeq).get();
   }
 }

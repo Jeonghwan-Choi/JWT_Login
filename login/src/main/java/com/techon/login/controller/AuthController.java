@@ -6,6 +6,7 @@ import com.techon.login.dto.TokenResponse;
 import com.techon.login.entity.Member;
 import com.techon.login.service.AuthService;
 import com.techon.login.service.RegistrationService;
+import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -35,5 +36,17 @@ public class AuthController {
   @PostMapping("/register")
   public ResponseEntity<Member> register(@RequestBody RegistrationRequest request) {
     return ResponseEntity.ok(registrationService.register(request));
+  }
+
+  @GetMapping("/token")
+  public ResponseEntity<Member> tokenInfo(@RequestHeader("Authorization") String token) {
+    try {
+      String accessToken = token.replace("Bearer ", "");
+      Member tokenResponse = authService.getTokenInfo(accessToken);
+      return ResponseEntity.ok(tokenResponse);
+    }catch (Exception e) {
+      e.printStackTrace();
+      return null;
+    }
   }
 }
