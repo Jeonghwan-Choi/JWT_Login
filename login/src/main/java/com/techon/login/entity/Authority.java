@@ -32,4 +32,9 @@ public class Authority {
     this.member = member;
     this.role = role;
   }
+
+  public Authority(Member member, String role) {
+    this.member = member;
+    this.role = role;
+  }
 }
